@@ -65,12 +65,42 @@ system_git_clone() {
   printf "${WHITE} 💻 Fazendo download do código Equipechat...${GRAY_LIGHT}"
   printf "\n\n"
 
-
   sleep 2
 
-  sudo su - deploy <<EOF
-  git clone ${link_git} /home/deploy/${instancia_add}/
+  # Check if user selected local bot2025 or if bot2025 exists and no git link provided
+  if [ "$link_git" = "local_bot2025" ] || ([ -d "../bot2025" ] && [ -z "$link_git" ]); then
+    printf "${GREEN} ✅ Usando código local otimizado (bot2025)...${GRAY_LIGHT}"
+    printf "\n\n"
+    
+    # Get the current script directory
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    BOT2025_PATH="$(dirname "$(dirname "$SCRIPT_DIR)")/bot2025"
+    
+    sudo su - deploy <<EOF
+    # Copy bot2025 directory to instance location
+    cp -r "$BOT2025_PATH" /home/deploy/${instancia_add}/
+    
+    # Move contents from bot2025 subdirectory to main directory
+    cd /home/deploy/${instancia_add}/
+    if [ -d "bot2025" ]; then
+      # Move all contents including hidden files
+      shopt -s dotglob
+      mv bot2025/* .
+      rmdir bot2025
+      shopt -u dotglob
+    fi
+    
+    # Set proper permissions
+    chown -R deploy:deploy /home/deploy/${instancia_add}/
 EOF
+  else
+    # Use git clone for external repositories
+    printf "${WHITE} 📥 Clonando repositório: ${link_git}${GRAY_LIGHT}"
+    printf "\n\n"
+    sudo su - deploy <<EOF
+    git clone ${link_git} /home/deploy/${instancia_add}/
+EOF
+  fi
 
   sleep 2
 }

@@ -11,9 +11,33 @@ get_mysql_root_password() {
 get_link_git() {
   
   print_banner
-  printf "${WHITE} 💻 Insira o link do GITHUB do seu Equipechat que deseja instalar:${GRAY_LIGHT}"
-  printf "\n\n"
-  read -p "> " link_git
+  
+  # Check if bot2025 directory exists locally
+  if [ -d "../bot2025" ]; then
+    printf "${GREEN} 🎯 Código otimizado para Ubuntu 22.04 detectado!${GRAY_LIGHT}"
+    printf "\n\n"
+    printf "${WHITE} 💻 Deseja usar o código local otimizado (bot2025) ou inserir um link do GitHub?${GRAY_LIGHT}"
+    printf "\n\n"
+    printf "${WHITE} [1] Usar código local otimizado (Recomendado para Ubuntu 22.04)${GRAY_LIGHT}"
+    printf "\n"
+    printf "${WHITE} [2] Inserir link do GitHub${GRAY_LIGHT}"
+    printf "\n\n"
+    read -p "> " opcao_codigo
+    
+    if [ "$opcao_codigo" = "1" ]; then
+      link_git="local_bot2025"
+      printf "\n${GREEN} ✅ Usando código local otimizado!${GRAY_LIGHT}\n\n"
+      sleep 2
+    else
+      printf "\n${WHITE} 💻 Insira o link do GITHUB do seu Equipechat:${GRAY_LIGHT}"
+      printf "\n\n"
+      read -p "> " link_git
+    fi
+  else
+    printf "${WHITE} 💻 Insira o link do GITHUB do seu Equipechat que deseja instalar:${GRAY_LIGHT}"
+    printf "\n\n"
+    read -p "> " link_git
+  fi
 }
 
 get_instancia_add() {
