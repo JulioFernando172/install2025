@@ -3,39 +3,6 @@
 # system management
 
 #######################################
-# checks Ubuntu version compatibility
-# Arguments:
-#   None
-#######################################
-system_check_ubuntu_version() {
-  print_banner
-  printf "${WHITE} 💻 Verificando compatibilidade do sistema...${GRAY_LIGHT}"
-  printf "\n\n"
-
-  sleep 2
-
-  # Get Ubuntu version
-  UBUNTU_VERSION=$(lsb_release -rs)
-  UBUNTU_CODENAME=$(lsb_release -cs)
-  
-  printf "${WHITE} 📋 Sistema detectado: Ubuntu ${UBUNTU_VERSION} (${UBUNTU_CODENAME})${GRAY_LIGHT}"
-  printf "\n\n"
-  
-  # Check if version is supported (20.04, 22.04, or newer)
-  if [[ "$UBUNTU_VERSION" < "20.04" ]]; then
-    printf "${RED} ❌ ERRO: Ubuntu ${UBUNTU_VERSION} não é suportado!${GRAY_LIGHT}"
-    printf "\n${WHITE} 📋 Versões suportadas: Ubuntu 20.04 LTS ou superior${GRAY_LIGHT}"
-    printf "\n\n"
-    exit 1
-  else
-    printf "${GREEN} ✅ Ubuntu ${UBUNTU_VERSION} é compatível!${GRAY_LIGHT}"
-    printf "\n\n"
-  fi
-
-  sleep 2
-}
-
-#######################################
 # creates user
 # Arguments:
 #   None
@@ -106,6 +73,30 @@ EOF
 }
 
 #######################################
+# checks ubuntu version
+# Arguments:
+#   None
+#######################################
+system_check_ubuntu_version() {
+  print_banner
+  printf "${WHITE} 💻 Verificando versão do Ubuntu...${GRAY_LIGHT}"
+  printf "\n\n"
+
+  UBUNTU_VERSION=$(lsb_release -rs)
+  printf "${GREEN} ✅ Ubuntu ${UBUNTU_VERSION} detectado${GRAY_LIGHT}"
+  printf "\n\n"
+
+  # Verificar se é Ubuntu 20.04 ou superior
+  if ! dpkg --compare-versions "$UBUNTU_VERSION" "ge" "20.04"; then
+    printf "${RED} ❌ Este instalador requer Ubuntu 20.04 ou superior${GRAY_LIGHT}"
+    printf "\n\n"
+    exit 1
+  fi
+
+  sleep 2
+}
+
+#######################################
 # updates system
 # Arguments:
 #   None
@@ -118,23 +109,8 @@ system_update() {
   sleep 2
 
   sudo su - root <<EOF
-  # Update package lists
-  apt -y update
-  apt -y upgrade
-  
-  # Install essential packages for Ubuntu 22.04
-  apt-get install -y curl \
-                     wget \
-                     git \
-                     unzip \
-                     software-properties-common \
-                     apt-transport-https \
-                     ca-certificates \
-                     gnupg \
-                     lsb-release \
-                     build-essential \
-                     python3 \
-                     python3-pip
+  apt update && apt upgrade -y
+  apt install -y curl wget git unzip software-properties-common build-essential python3 python3-pip
 EOF
 
   sleep 2
@@ -364,9 +340,8 @@ system_node_install() {
   sleep 2
   npm install -g npm@latest
   sleep 2
-  # Add PostgreSQL repository with updated GPG key method for Ubuntu 22.04
   sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-  wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
+  wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
   sudo apt-get update -y && sudo apt-get -y install postgresql
   sleep 2
   sudo timedatectl set-timezone America/Sao_Paulo
@@ -391,22 +366,18 @@ system_docker_install() {
   apt install -y apt-transport-https \
                  ca-certificates curl \
                  software-properties-common \
-                 gnupg \
-                 lsb-release
+                 gnupg lsb-release
 
-  # Remove old Docker packages if they exist
-  apt-get remove -y docker docker-engine docker.io containerd runc
-
-  # Add Docker's official GPG key (Ubuntu 22.04 compatible method)
-  install -m 0755 -d /etc/apt/keyrings
+  # Método moderno para Ubuntu 22.04
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-  chmod a+r /etc/apt/keyrings/docker.gpg
   
-  # Add Docker repository for Ubuntu 22.04 (jammy)
-  echo "deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+  echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable" > /etc/apt/sources.list.d/docker.list
 
   apt update
   apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  
+  systemctl start docker
+  systemctl enable docker
 EOF
 
   sleep 2
@@ -431,10 +402,6 @@ system_puppeteer_dependencies() {
   sleep 2
 
   sudo su - root <<EOF
-  # Update package list first
-  apt-get update
-  
-  # Install Puppeteer dependencies compatible with Ubuntu 22.04
   apt-get install -y libxshmfence-dev \
                       libgbm-dev \
                       wget \

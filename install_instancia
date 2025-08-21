@@ -36,6 +36,9 @@ source "${PROJECT_ROOT}"/config
 # interactive CLI
 inquiry_options
 
+# check ubuntu version
+system_check_ubuntu_version
+
 # dependencies related
 system_update
 system_node_install

@@ -36,7 +36,7 @@ source "${PROJECT_ROOT}"/config
 # interactive CLI
 inquiry_options
 
-# check Ubuntu version compatibility
+# check ubuntu version
 system_check_ubuntu_version
 
 # dependencies related
